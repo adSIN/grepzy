@@ -1,70 +1,54 @@
-import getpass
-
 from viewer import LogViewer
-from ssh_client import start_server
-from session_manager import (
-    choose_session,
-    get_session,
-    create_session,
-)
+from search import start_search
+from live import start_live
+from session_manager import choose_session, get_session, session_menu
+from utils import clear
+def print_footer():
+    print("\n" + "─" * 60)
+    print("         Grepzy v1.0 | One Search. Every Server.")
+    print("         https://github.com/adSIN/grepzy")
+    print("         Made with <3 by adSIN")
+    print("─" * 60)
 
 while True:
+    clear()
 
-    print("\n===== GREPZY =====")
-    print("1. Start Session")
-    print("2. Create Session")
-    print("3. Exit")
+    print("""
+==========================================
+              GREPZY
+      One Search. Every Server.
+==========================================
+""")
+    print("1. Live Monitor")
+    print("2. Search Logs")
+    print("3. Sessions")
+    print("4. Exit")
+    print_footer()
 
     choice = input("Choice: ")
 
     if choice == "1":
-        break
+        start_live()
 
     elif choice == "2":
-        create_session()
+
+        results = start_search()
+
+        if results:
+            LogViewer(
+                mode="search",
+                search_results=results
+            ).run()
 
     elif choice == "3":
-        exit()
+        session_menu()
 
-
-session_name = choose_session()
-
-session = get_session(session_name)
-
-passwords = {}
-
-if len(session) > 0:
-    for server in session["servers"]:
-
-        pwd = getpass.getpass(
-            f"{server['name']} Password: "
+    elif choice == "4":
+        confirm = input(
+        "\nExit Grepzy? (y/N): "
         )
 
-        passwords[server["name"]] = pwd
+        if confirm.lower() == "y":
+            print("\nGoodbye!\n")
+            break
 
-    connections = []
-
-    search_results = []
-
-    for server in session["servers"]:
-
-        results, errors = search_logs(
-            host=server["host"],
-            username=server["username"],
-            password=passwords[server["name"]],
-            search_text=query,
-            directory="/logs"
-        )
-
-        for result in results:
-
-            result["server"] = server["name"]
-
-            search_results.append(result)
-
-    connections.append(ssh)
-
-LogViewer().run()
-
-for ssh in connections:
-    ssh.close()

@@ -3,6 +3,31 @@ import os
 
 SESSION_FILE = "sessions.json"
 
+def session_menu():
+
+    while True:
+
+        print("\n===== SESSIONS =====")
+
+        print("1. List Sessions")
+        print("2. Create Session")
+        print("3. Delete Session")
+        print("4. Back")
+
+        choice = input("Choice: ")
+
+        if choice == "1":
+            list_sessions()
+
+        elif choice == "2":
+            create_session()
+
+        elif choice == "3":
+            delete_session()
+
+        elif choice == "4":
+            return
+        
 def load_sessions():
 
     if not os.path.exists(SESSION_FILE):
@@ -87,3 +112,28 @@ def get_session(session_name):
     sessions = load_sessions()
 
     return sessions.get(session_name)
+
+def delete_session():
+
+    sessions = load_sessions()
+
+    names = list_sessions()
+
+    if not names:
+        return
+
+    choice = int(input("\nDelete Session: "))
+
+    name = names[choice - 1]
+
+    confirm = input(
+        f"Delete '{name}'? (y/N): "
+    )
+
+    if confirm.lower() == "y":
+
+        del sessions[name]
+
+        save_sessions(sessions)
+
+        print("Session deleted.")

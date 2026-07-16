@@ -1,0 +1,12 @@
+{
+    "mfp1": {
+        "servers": [
+            {
+                "name": "mfp72",
+                "host": "10.77.32.72",
+                "username": "mfpadmin",
+                "log": "/logs/mfpMessages.log"
+            }
+        ]
+    }
+}

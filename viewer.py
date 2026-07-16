@@ -6,6 +6,12 @@ from log_reader import log_queue
 
 class LogViewer(App):
 
+    def __init__(self, mode="live", search_results=None):
+        super().__init__()
+
+        self.mode = mode
+        self.search_results = search_results or []
+
     CSS = """
     Screen {
         layout: vertical;
@@ -41,7 +47,10 @@ class LogViewer(App):
 
         self.filter_text = ""
 
-        self.set_interval(0.2, self.refresh_logs)
+        if self.mode == "live":
+            self.set_interval(0.2, self.refresh_logs)
+        else:
+            self.load_search_results()
 
     def refresh_logs(self):
 
@@ -80,6 +89,17 @@ class LogViewer(App):
                     f"{entry['server']} | {entry['text']}"
                 )
 
+    def load_search_results(self):
+
+        for entry in self.search_results:
+
+            self.history.append(entry)
+
+            self.log_widget.write(
+                f"{entry['server']} | "
+                f"{entry['file']}:{entry['line']} | "
+                f"{entry['text']}"
+            )
 
 if __name__ == "__main__":
     LogViewer().run()

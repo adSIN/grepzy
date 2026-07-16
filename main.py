@@ -1,29 +1,70 @@
 import getpass
-import paramiko
-import shlex
-from log_reader import read_logs,logs
-import threading
+
 from viewer import LogViewer
-
-host = ""
-username = "root"
-password = getpass.getpass("Enter the password: ")
-
-ssh = paramiko.SSHClient()
-ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect(host, username=username, password=password)
-
-command = "tail -F /logs/mfpMessages.logs"
-stdin,stdout,stderr = ssh.exec_command(command)
-
-thread = threading.Thread(
-    target = read_logs,
-    args = (stdout,),
-    daemon = True
+from ssh_client import start_server
+from session_manager import (
+    choose_session,
+    get_session,
+    create_session,
 )
 
-thread.start()
+while True:
+
+    print("\n===== GREPZY =====")
+    print("1. Start Session")
+    print("2. Create Session")
+    print("3. Exit")
+
+    choice = input("Choice: ")
+
+    if choice == "1":
+        break
+
+    elif choice == "2":
+        create_session()
+
+    elif choice == "3":
+        exit()
+
+
+session_name = choose_session()
+
+session = get_session(session_name)
+
+passwords = {}
+
+if len(session) > 0:
+    for server in session["servers"]:
+
+        pwd = getpass.getpass(
+            f"{server['name']} Password: "
+        )
+
+        passwords[server["name"]] = pwd
+
+    connections = []
+
+    search_results = []
+
+    for server in session["servers"]:
+
+        results, errors = search_logs(
+            host=server["host"],
+            username=server["username"],
+            password=passwords[server["name"]],
+            search_text=query,
+            directory="/logs"
+        )
+
+        for result in results:
+
+            result["server"] = server["name"]
+
+            search_results.append(result)
+
+    connections.append(ssh)
 
 LogViewer().run()
 
-ssh.close()
+for ssh in connections:
+    ssh.close()

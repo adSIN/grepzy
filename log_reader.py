@@ -1,19 +1,12 @@
-import threading 
 from datetime import datetime
-import paramiko
+from queue import Queue
 
-logs = []
+log_queue = Queue()
 
-def read_logs(stdout):
+def read_logs(stdout, server_name):
     for line in iter(stdout.readline, ""):
-
-        print("FROM SERVER:", line.rstrip())
-        
-        logs.append({
-        "time": datetime.now(),
+        log_queue.put({
+        "server": server_name,
         "text": line.rstrip(),
-        "server": "SERVER-1"
+        "time": datetime.now()
         })
-
-        if len(logs)> 5000:
-            logs.pop(0)

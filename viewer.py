@@ -1,7 +1,8 @@
 from textual.app import App, ComposeResult
 from textual.containers import Vertical
 from textual.widgets import Header, Footer, Input, RichLog
-from log_reader import logs
+from queue import Empty
+from log_reader import log_queue
 
 class LogViewer(App):
 
@@ -32,6 +33,7 @@ class LogViewer(App):
         yield Footer()
 
     def on_mount(self):
+        self.history = []
 
         self.log_widget = self.query_one("#logs", RichLog)
 
@@ -43,18 +45,20 @@ class LogViewer(App):
 
     def refresh_logs(self):
 
-        while self.last < len(logs):
+         while True:
 
-            entry = logs[self.last]
+            try:
+                entry = log_queue.get_nowait()
+
+            except Empty:
+                break
+
+            self.history.append(entry)
 
             if self.filter_text in entry["text"].lower():
-
-
                 self.log_widget.write(
                     f"{entry['server']} | {entry['text']}"
                 )
-
-            self.last += 1
 
 
     def on_input_changed(self, event):
@@ -67,7 +71,9 @@ class LogViewer(App):
     def redraw_logs(self):
 
         self.log_widget.clear()
-        for entry in logs:
+
+        for entry in self.history:
+
             if self.filter_text in entry["text"].lower():
 
                 self.log_widget.write(

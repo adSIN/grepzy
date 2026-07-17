@@ -64,15 +64,15 @@ class LogViewer(App):
 
             self.history.append(entry)
 
-            if self.filter_text in entry["text"].lower():
+            if self.filter_text in entry["text"].casefold():
                 self.log_widget.write(
                     f"{entry['server']} | {entry['text']}"
                 )
 
 
-    def on_input_changed(self, event):
+    def on_input_changed(self, event: Input.Changed) -> None:
 
-        self.filter_text = event.value.lower()
+        self.filter_text = event.value.casefold()
 
         self.redraw_logs()
 
@@ -83,7 +83,7 @@ class LogViewer(App):
 
         for entry in self.history:
 
-            if self.filter_text in entry["text"].lower():
+            if self.filter_text in entry["text"].casefold():
 
                 self.log_widget.write(
                     f"{entry['server']} | {entry['text']}"

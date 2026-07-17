@@ -29,7 +29,7 @@ def start_live():
     connections = []
 
     for server in session["servers"]:
-
+        print(f"Using logfile: {server['log']}")
         ssh = start_server(
             server_name=server["name"],
             host=server["host"],

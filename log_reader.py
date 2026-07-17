@@ -3,12 +3,15 @@ from queue import Queue
 
 log_queue = Queue()
 
-def read_logs(stdout, server_name):
+def read_logs(stdout, server_name, is_error=False):
     for line in iter(stdout.readline, ""):
-        print("FROM SERVER:", line.rstrip())
-        
+        text = line.rstrip()
+
+        if is_error:
+            text = f"[tail error] {text}"
+
         log_queue.put({
-        "server": server_name,
-        "text": line.rstrip(),
-        "time": datetime.now()
+            "server": server_name,
+            "text": text,
+            "time": datetime.now(),
         })

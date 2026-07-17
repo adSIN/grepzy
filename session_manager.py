@@ -1,12 +1,13 @@
 import json
 import os
+from utils import clear
 
 SESSION_FILE = "sessions.json"
 
 def session_menu():
 
     while True:
-
+        clear()
         print("\n===== SESSIONS =====")
 
         print("1. List Sessions")

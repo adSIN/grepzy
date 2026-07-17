@@ -1,8 +1,8 @@
 import getpass
 import paramiko
-
+import shlex
 from session_manager import choose_session, get_session
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def search_logs(host, username, password, search_text, directory):
 
@@ -15,9 +15,12 @@ def search_logs(host, username, password, search_text, directory):
         password=password
     )
 
-    command = f'grep -R -H -n "{search_text}" {directory}'
+    pattern = shlex.quote(search_text)
+    search_dir = shlex.quote(directory)
+    command = f"grep -R -H -n {pattern} {search_dir}"
 
     stdin, stdout, stderr = ssh.exec_command(command)
+    print(f"[{host}] Running: {command}")
 
     results = []
 
@@ -32,7 +35,7 @@ def search_logs(host, username, password, search_text, directory):
                 "line": parts[1],
                 "text": parts[2]
             })
-
+    print(f"[{host}] Found {len(results)} matches")
     errors = stderr.read().decode()
 
     ssh.close()
@@ -64,21 +67,38 @@ def start_search():
 
     results = []
 
-    for server in session["servers"]:
+    future_to_server = {}
 
-        server_results, errors = search_logs(
-            host=server["host"],
-            username=server["username"],
-            password=passwords[server["name"]],
-            search_text=query,
-            directory="/logs"
-        )
+    with ThreadPoolExecutor(max_workers=len(session["servers"])) as executor:
 
-        if errors:
-            print(errors)
+        for server in session["servers"]:
 
-        for entry in server_results:
-            entry["server"] = server["name"]
-            results.append(entry)
+            future = executor.submit(
+                search_logs,
+                host=server["host"],
+                username=server["username"],
+                password=passwords[server["name"]],
+                search_text=query,
+                directory="/logs"
+            )
+
+            future_to_server[future] = server
+
+        for future in as_completed(future_to_server):
+
+            server = future_to_server[future]
+
+            try:
+                server_results, errors = future.result()
+
+                if errors:
+                    print(f"{server['name']}: {errors}")
+
+                for entry in server_results:
+                    entry["server"] = server["name"]
+                    results.append(entry)
+
+            except Exception as e:
+                print(f"{server['name']} failed: {e}")
 
     return results
